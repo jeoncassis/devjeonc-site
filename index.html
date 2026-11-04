@@ -5,19 +5,31 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>jeonc apps</title>
 <style>
-  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; max-width: 640px; margin: 60px auto; padding: 0 20px; color: #222; line-height: 1.6; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; max-width: 1040px; margin: 60px auto; padding: 0 20px; color: #222; line-height: 1.6; }
   h1 { font-size: 1.5rem; margin-bottom: 4px; }
+  h2 { font-size: 1.1rem; margin: 0 0 4px; padding-bottom: 8px; border-bottom: 2px solid #222; }
   p.sub { color: #666; margin-top: 0; }
-  ul { list-style: none; padding: 0; }
+  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; margin-top: 32px; }
+  @media (max-width: 720px) { .cols { grid-template-columns: 1fr; gap: 32px; } }
+  ul { list-style: none; padding: 0; margin: 0; }
   li { padding: 10px 0; border-bottom: 1px solid #eee; }
   a { color: #1a5fb4; text-decoration: none; }
   a:hover { text-decoration: underline; }
+  .pc li { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+  .pc .desc { display: block; color: #666; font-size: 0.85rem; }
+  .pc .meta { color: #999; font-size: 0.8rem; margin-left: 6px; }
+  .dl { flex: none; padding: 4px 12px; border: 1px solid #1a5fb4; border-radius: 6px; font-size: 0.85rem; }
+  .dl:hover { background: #1a5fb4; color: #fff; text-decoration: none; }
+  .note { color: #888; font-size: 0.8rem; margin-top: 12px; }
   footer { margin-top: 40px; color: #999; font-size: 0.85rem; }
 </style>
 </head>
 <body>
 <h1>jeonc</h1>
-<p class="sub">Android app developer</p>
+<p class="sub">Android &amp; Windows app developer</p>
+<div class="cols">
+<section>
+<h2>Android</h2>
 <ul>
   <li><a href="https://play.google.com/store/apps/details?id=com.jeonc.accurateweather">날씨알리미 - 노르웨이 기상청 예보</a></li>
   <li><a href="https://play.google.com/store/apps/details?id=com.jeonc.brainMaster">두뇌마스터: 스도쿠 &amp; 퍼즐 IQ</a></li>
@@ -34,6 +46,24 @@
   <li><a href="https://play.google.com/store/apps/details?id=com.owlmakers.ledboard">LED 전광판 - 응원 메시지 보드</a></li>
   <li><a href="https://play.google.com/store/apps/details?id=com.jeonc.videomaker">VideoMaker</a></li>
 </ul>
+</section>
+<section class="pc">
+<h2>Windows PC</h2>
+<ul>
+  <li>
+    <span><a href="https://github.com/jeoncassis/ScreenCapture">화면 캡처</a><span class="meta">v1.0</span>
+      <span class="desc">드래그로 영역을 캡처해 바로 붙여넣기</span></span>
+    <a class="dl" href="https://github.com/jeoncassis/ScreenCapture/releases/latest/download/ScreenCapture.zip">다운로드</a>
+  </li>
+  <li>
+    <span><a href="https://github.com/jeoncassis/PcMonitor">PC 모니터</a><span class="meta">v1.0</span>
+      <span class="desc">CPU·메모리·GPU·온도 실시간 그래프, 트레이 표시, 과부하 알림</span></span>
+    <a class="dl" href="https://github.com/jeoncassis/PcMonitor/releases/latest/download/PcMonitor.zip">다운로드</a>
+  </li>
+</ul>
+<p class="note">Windows 10/11용입니다. 압축을 풀고 exe를 실행하세요. 처음 실행할 때 "Windows의 PC 보호" 창이 뜨면 <b>추가 정보 → 실행</b>을 누르세요.</p>
+</section>
+</div>
 <footer>Contact: jeoncassis@gmail.com</footer>
 </body>
 </html>
