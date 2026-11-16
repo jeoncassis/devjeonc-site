@@ -16,7 +16,7 @@
   .btn { align-self: end; display: inline-block; padding: 14px 32px; border-radius: 999px; font-weight: 600; font-size: 1.05rem; background: #1a5fb4; color: #fff; text-decoration: none; transition: transform .15s, filter .15s; }
   .btn:hover { filter: brightness(1.1); transform: translateY(-2px); }
   .btns { align-self: end; display: flex; flex-direction: column; gap: 12px; width: min(280px, 100%); }
-  .btns .btn { text-align: center; }
+  .btns .btn { text-align: center; align-self: stretch; }
   .btn.ghost { background: #fff; color: #1a5fb4; border: 2px solid #1a5fb4; padding: 12px 30px; }
 </style>
 </head>
@@ -29,7 +29,7 @@
   </div>
   <nav class="btns">
     <a class="btn ghost" href="/about/">개발자 소개</a>
-    <a class="btn" href="/apps/">앱 보러가기 →</a>
+    <a class="btn" href="/apps/">앱 보러가기</a>
     <a class="btn ghost" href="/guestbook/">방명록</a>
   </nav>
 </main>
