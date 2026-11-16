@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>jeonc 앱 목록</title>
 <style>
-  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; max-width: 1040px; margin: 60px auto; padding: 0 20px; color: #222; line-height: 1.6; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; max-width: 1040px; margin: 32px auto; padding: 0 20px; color: #222; line-height: 1.6; }
   h1 { font-size: 1.5rem; margin-bottom: 4px; }
   h2 { font-size: 1.1rem; margin: 0 0 4px; padding-bottom: 8px; border-bottom: 2px solid #222; }
   p.sub { color: #666; margin-top: 0; }
@@ -23,7 +23,16 @@
   .note { color: #888; font-size: 0.8rem; margin-top: 12px; }
   footer { margin-top: 40px; color: #999; font-size: 0.85rem; }
   .home { display: inline-block; margin-bottom: 24px; color: #666; font-size: 0.9rem; }
-  section { scroll-margin-top: 24px; }
+  section { scroll-margin-top: 24px; display: flex; flex-direction: column; min-height: 0; }
+  /* 목록이 길어도 한 화면 안에 보이도록 각 목록 안에서만 스크롤 */
+  .cols { height: calc(100vh - 210px); height: calc(100dvh - 210px); min-height: 320px; }
+  section ul { flex: 1; min-height: 0; overflow-y: auto; padding-right: 6px; }
+  section ul::-webkit-scrollbar { width: 6px; }
+  section ul::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px; }
+  @media (max-width: 720px) {
+    .cols { height: auto; }
+    section ul { max-height: 50vh; max-height: 50dvh; }
+  }
 </style>
 </head>
 <body>
@@ -38,6 +47,7 @@
   <li><a href="https://play.google.com/store/apps/details?id=com.jeonc.brainMaster">두뇌마스터: 스도쿠 &amp; 퍼즐 IQ</a></li>
   <li><a href="https://play.google.com/store/apps/details?id=com.lotto.lotto_camera">로또 카메라 - 안 되는 번호 지우개</a></li>
   <li><a href="https://play.google.com/store/apps/details?id=com.jeon.mannercamera">매너 카메라</a></li>
+  <li><a href="https://play.google.com/store/apps/details?id=com.jeonc.videomaker">비디오 메이커</a></li>
   <li><a href="https://play.google.com/store/apps/details?id=com.jeonc.sajuAndUnse">사주와운세</a></li>
   <li><a href="https://play.google.com/store/apps/details?id=com.jeonc.sudokugame">스도쿠게임</a></li>
   <li><a href="https://play.google.com/store/apps/details?id=com.jeonc.spaceguard">스페이스가드</a></li>
@@ -48,7 +58,6 @@
   <li><a href="https://play.google.com/store/apps/details?id=com.lotto.numbergenerator">AI 로또번호추천</a></li>
   <li><a href="https://play.google.com/store/apps/details?id=com.owlmakers.ledboard">LED 전광판 - 응원 메시지 보드</a></li>
   <li><a href="https://play.google.com/store/apps/details?id=com.jeonc.mbtiAnalyzer">MBTI 테스트 - 64유형 성격 분석</a></li>
-  <li><a href="https://play.google.com/store/apps/details?id=com.jeonc.videomaker">VideoMaker</a></li>
 </ul>
 </section>
 <section class="pc" id="pc">
