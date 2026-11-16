@@ -6,7 +6,8 @@
 <title>개발자 소개 — jeonc의 개발홈</title>
 <link rel="stylesheet" href="/assets/site.css">
 <style>
-  .wrap { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: 28px; height: calc(100vh - 265px); height: calc(100dvh - 265px); min-height: 520px; }
+  .wrap { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: 24px; min-height: 0; }
+  .photo { max-height: 42%; }
   .profile { display: flex; flex-direction: column; min-height: 0; }
   .photo { width: 100%; aspect-ratio: 4 / 3; border-radius: 14px; background: #f0f2f6 center / cover no-repeat; display: grid; place-items: center; color: #aaa; font-size: 0.9rem; flex: none; }
   .intro { margin-top: 16px; flex: 1; min-height: 0; overflow-y: auto; white-space: pre-wrap; border: 1px solid #e3e6ec; border-radius: 12px; padding: 14px 16px; }
@@ -19,7 +20,7 @@
   .board .bh button, .board .bh .btn { padding: 3px 12px; font-size: 0.82rem; }
   .board .list { flex: 1; min-height: 0; overflow-y: auto; }
   @media (max-width: 760px) {
-    .wrap { grid-template-columns: 1fr; height: auto; }
+    .wrap { grid-template-columns: 1fr; }
     .intro { max-height: 50vh; }
     .boards { grid-template-rows: none; }
     .board .list { max-height: 260px; }
@@ -31,7 +32,7 @@
 <h1>개발자 소개</h1>
 <p class="sub">Android &amp; Windows app developer</p>
 
-<div class="wrap">
+<div class="wrap fill">
   <section class="profile">
     <div class="photo" id="photo">사진</div>
     <div class="intro" id="intro">불러오는 중…</div>

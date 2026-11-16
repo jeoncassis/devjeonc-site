@@ -7,7 +7,9 @@
 <link rel="stylesheet" href="/assets/site.css">
 <style>
   .head { display: flex; align-items: flex-end; gap: 12px; margin-bottom: 8px; }
-  .list { max-height: calc(100vh - 260px); max-height: calc(100dvh - 260px); min-height: 240px; overflow-y: auto; border-top: 2px solid #222; }
+  .list { overflow-y: auto; border-top: 2px solid #222; }
+  @media (max-width: 760px) { .list { max-height: 60vh; } }
+  .head { flex: none; }
 </style>
 </head>
 <body>
@@ -17,7 +19,7 @@
   <span class="spacer"></span>
   <a class="btn" href="/guestbook/post.html?new=1">글쓰기</a>
 </div>
-<ul class="list" id="list"><li class="empty">불러오는 중…</li></ul>
+<ul class="list fill" id="list"><li class="empty">불러오는 중…</li></ul>
 <div class="adminbar" id="adminbar"></div>
 
 <script type="module">

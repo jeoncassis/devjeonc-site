@@ -18,6 +18,15 @@
   .btns { align-self: end; display: flex; flex-direction: column; gap: 12px; width: min(280px, 100%); }
   .btns .btn { text-align: center; align-self: stretch; }
   .btn.ghost { background: #fff; color: #1a5fb4; border: 2px solid #1a5fb4; padding: 12px 30px; }
+  /* 넓은 화면: 정확히 한 화면 (동영상이 남는 높이에 맞춰 줄어듦) */
+  @media (min-width: 721px) {
+    main { height: 100vh; height: 100dvh; min-height: 0; padding: 28px 20px; grid-template-rows: auto minmax(0, 1fr) auto; overflow: hidden; }
+    .mid { min-height: 0; max-height: 100%; margin: 16px 0; }
+    .mid video { max-height: calc(100vh - 400px); max-height: calc(100dvh - 400px); object-fit: contain; }
+    .btns { gap: 10px; }
+    .btn { padding: 11px 30px; }
+    .btn.ghost { padding: 9px 28px; }
+  }
 </style>
 </head>
 <body>

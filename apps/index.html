@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>jeonc 앱 목록</title>
 <style>
+  * { box-sizing: border-box; }
   body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; max-width: 1040px; margin: 32px auto; padding: 0 20px; color: #222; line-height: 1.6; }
   h1 { font-size: 1.5rem; margin-bottom: 4px; }
   h2 { font-size: 1.1rem; margin: 0 0 4px; padding-bottom: 8px; border-bottom: 2px solid #222; }
@@ -29,6 +30,13 @@
   section ul { flex: 1; min-height: 0; overflow-y: auto; padding-right: 6px; }
   section ul::-webkit-scrollbar { width: 6px; }
   section ul::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px; }
+  /* 넓은 화면: 페이지 전체가 정확히 한 화면, 남는 높이를 목록이 씀 */
+  @media (min-width: 721px) {
+    body { height: 100vh; height: 100dvh; margin: 0 auto; padding: 20px 20px 14px; display: flex; flex-direction: column; overflow: hidden; }
+    .home { margin-bottom: 10px; }
+    .cols { flex: 1; min-height: 0; height: auto; margin-top: 16px; }
+    footer { margin-top: 12px; flex: none; }
+  }
   @media (max-width: 720px) {
     .cols { height: auto; }
     section ul { max-height: 50vh; max-height: 50dvh; }
