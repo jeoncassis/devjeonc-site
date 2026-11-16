@@ -1,0 +1,65 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // 사이트 주인(관리자) — Google 로그인 이메일로 확인
+    function isOwner() {
+      return request.auth != null
+        && request.auth.token.email == 'jeoncassis@gmail.com'
+        && request.auth.token.email_verified == true;
+    }
+    function text(v, minLen, maxLen) {
+      return v is string && v.size() >= minLen && v.size() <= maxLen;
+    }
+
+    // ---------------- 개발자 소개: 누구나 읽기, 주인만 쓰기 ----------------
+    match /profile/{doc} {
+      allow read: if true;
+      allow write: if isOwner()
+        && request.resource.data.keys().hasOnly(['intro', 'photo', 'updatedAt'])
+        && text(request.resource.data.intro, 0, 5000)
+        && text(request.resource.data.photo, 0, 600000);
+    }
+
+    // 공지사항 및 알림 / 최신 뉴스 / 개발자의 한마디
+    function validPost() {
+      return request.resource.data.keys().hasOnly(['title', 'body', 'createdAt', 'updatedAt'])
+        && text(request.resource.data.title, 1, 200)
+        && text(request.resource.data.body, 0, 20000);
+    }
+    match /notice/{id} { allow read: if true; allow create, update: if isOwner() && validPost(); allow delete: if isOwner(); }
+    match /news/{id}   { allow read: if true; allow create, update: if isOwner() && validPost(); allow delete: if isOwner(); }
+    match /word/{id}   { allow read: if true; allow create, update: if isOwner() && validPost(); allow delete: if isOwner(); }
+
+    // ---------------- 방명록: 누구나 쓰기, 쓴 사람·주인만 수정/삭제 ----------------
+    function validGuest() {
+      return request.resource.data.keys().hasOnly(['title', 'name', 'body', 'uid', 'createdAt', 'updatedAt'])
+        && text(request.resource.data.title, 1, 100)
+        && text(request.resource.data.name, 1, 30)
+        && text(request.resource.data.body, 1, 5000);
+    }
+    match /guestbook/{id} {
+      allow read: if true;
+      allow create: if request.auth != null
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.createdAt == request.time
+        && validGuest();
+      allow update: if request.auth != null
+        && (resource.data.uid == request.auth.uid || isOwner())
+        && request.resource.data.uid == resource.data.uid
+        && request.resource.data.createdAt == resource.data.createdAt
+        && validGuest();
+      allow delete: if request.auth != null
+        && (resource.data.uid == request.auth.uid || isOwner());
+
+      // 댓글: 누구나 읽기, 주인만 쓰기
+      match /comments/{cid} {
+        allow read: if true;
+        allow create, update: if isOwner()
+          && request.resource.data.keys().hasOnly(['body', 'createdAt', 'updatedAt'])
+          && text(request.resource.data.body, 1, 3000);
+        allow delete: if isOwner();
+      }
+    }
+  }
+}

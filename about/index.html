@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>개발자 소개 — jeonc의 개발홈</title>
+<link rel="stylesheet" href="/assets/site.css">
+<style>
+  .wrap { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: 28px; height: calc(100vh - 265px); height: calc(100dvh - 265px); min-height: 520px; }
+  .profile { display: flex; flex-direction: column; min-height: 0; }
+  .photo { width: 100%; aspect-ratio: 4 / 3; border-radius: 14px; background: #f0f2f6 center / cover no-repeat; display: grid; place-items: center; color: #aaa; font-size: 0.9rem; flex: none; }
+  .intro { margin-top: 16px; flex: 1; min-height: 0; overflow-y: auto; white-space: pre-wrap; border: 1px solid #e3e6ec; border-radius: 12px; padding: 14px 16px; }
+  .intro.empty-intro { color: #aaa; }
+  #introEdit { flex: 1; min-height: 0; display: flex; flex-direction: column; margin-top: 12px; }
+  #introEdit textarea { flex: 1; min-height: 160px; }
+  .boards { display: grid; grid-template-rows: 1fr 1fr 1fr; gap: 16px; min-height: 0; }
+  .board { display: flex; flex-direction: column; min-height: 0; border: 1px solid #e3e6ec; border-radius: 12px; padding: 12px 14px 4px; }
+  .board .bh { display: flex; align-items: center; gap: 8px; padding-bottom: 8px; border-bottom: 2px solid #222; }
+  .board .bh button, .board .bh .btn { padding: 3px 12px; font-size: 0.82rem; }
+  .board .list { flex: 1; min-height: 0; overflow-y: auto; }
+  @media (max-width: 760px) {
+    .wrap { grid-template-columns: 1fr; height: auto; }
+    .intro { max-height: 50vh; }
+    .boards { grid-template-rows: none; }
+    .board .list { max-height: 260px; }
+  }
+</style>
+</head>
+<body>
+<a class="home" href="/">← 홈</a>
+<h1>개발자 소개</h1>
+<p class="sub">Android &amp; Windows app developer</p>
+
+<div class="wrap">
+  <section class="profile">
+    <div class="photo" id="photo">사진</div>
+    <div class="intro" id="intro">불러오는 중…</div>
+    <div id="introEdit" class="hidden">
+      <label for="photoFile" style="margin-top:0">사진 바꾸기 (선택)</label>
+      <input type="file" id="photoFile" accept="image/*">
+      <label for="introText">소개글</label>
+      <textarea id="introText" maxlength="5000"></textarea>
+      <div class="row end" style="margin-top:8px">
+        <button class="ghost" id="introCancel">취소</button>
+        <button id="introSave">저장</button>
+      </div>
+    </div>
+    <div class="row end hidden" id="introTools" style="margin-top:8px"><button class="ghost" id="introEditBtn">소개 수정</button></div>
+  </section>
+
+  <section class="boards">
+    <div class="board" data-board="notice"><div class="bh"><h2>공지사항 및 알림</h2><span class="spacer"></span></div><ul class="list"></ul></div>
+    <div class="board" data-board="news"><div class="bh"><h2>최신 뉴스</h2><span class="spacer"></span></div><ul class="list"></ul></div>
+    <div class="board" data-board="word"><div class="bh"><h2>개발자의 한마디</h2><span class="spacer"></span></div><ul class="list"></ul></div>
+  </section>
+</div>
+
+<div class="adminbar" id="adminbar"></div>
+
+<script type="module">
+import {
+  db, doc, getDoc, setDoc, collection, getDocs, query, orderBy, limit, serverTimestamp,
+  watchUser, isOwner, adminBar, $, fmtDate, renderText, toast, errMsg,
+} from '/assets/fb.js';
+
+let user = null;
+let profile = { intro: '', photo: '' };
+let newPhoto = null;
+
+function paintProfile() {
+  const p = $('#photo');
+  if (profile.photo) { p.style.backgroundImage = `url("${profile.photo}")`; p.textContent = ''; }
+  else { p.style.backgroundImage = ''; p.textContent = '사진'; }
+  const i = $('#intro');
+  if (profile.intro) { i.classList.remove('empty-intro'); renderText(i, profile.intro); }
+  else { i.classList.add('empty-intro'); i.textContent = '아직 소개글이 없어요.'; }
+  $('#introTools').classList.toggle('hidden', !isOwner(user) || !$('#introEdit').classList.contains('hidden'));
+}
+
+async function loadProfile() {
+  try {
+    const s = await getDoc(doc(db, 'profile', 'main'));
+    if (s.exists()) profile = { intro: s.data().intro || '', photo: s.data().photo || '' };
+  } catch (e) { toast(errMsg(e)); }
+  paintProfile();
+}
+
+async function loadBoard(el) {
+  const name = el.dataset.board, ul = el.querySelector('.list');
+  try {
+    const snap = await getDocs(query(collection(db, name), orderBy('createdAt', 'desc'), limit(100)));
+    ul.textContent = '';
+    if (snap.empty) { ul.innerHTML = '<li class="empty">아직 글이 없어요.</li>'; return; }
+    snap.forEach((d) => {
+      const v = d.data();
+      const li = document.createElement('li');
+      const a = document.createElement('a'); a.href = `/about/post.html?board=${name}&id=${d.id}`;
+      const t = document.createElement('span'); t.className = 't'; t.textContent = v.title;
+      const m = document.createElement('span'); m.className = 'm'; m.textContent = fmtDate(v.createdAt).slice(0, 10);
+      a.append(t, m); li.append(a); ul.append(li);
+    });
+  } catch (e) { ul.textContent = errMsg(e); }
+}
+
+function paintBoardTools() {
+  document.querySelectorAll('.board').forEach((el) => {
+    const bh = el.querySelector('.bh');
+    bh.querySelector('.btn')?.remove();
+    if (isOwner(user)) {
+      const a = document.createElement('a'); a.className = 'btn'; a.textContent = '글쓰기';
+      a.href = `/about/post.html?board=${el.dataset.board}&new=1`;
+      bh.append(a);
+    }
+  });
+}
+
+// 사진은 작게 줄여 저장 (긴 쪽 640px, JPEG)
+function shrink(file) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const max = 640, r = Math.min(1, max / Math.max(img.width, img.height));
+      const c = document.createElement('canvas');
+      c.width = Math.round(img.width * r); c.height = Math.round(img.height * r);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      resolve(c.toDataURL('image/jpeg', 0.82));
+      URL.revokeObjectURL(img.src);
+    };
+    img.onerror = reject;
+    img.src = URL.createObjectURL(file);
+  });
+}
+
+$('#introEditBtn').onclick = () => {
+  newPhoto = null; $('#photoFile').value = '';
+  $('#introText').value = profile.intro;
+  $('#intro').classList.add('hidden'); $('#introEdit').classList.remove('hidden'); $('#introTools').classList.add('hidden');
+};
+$('#introCancel').onclick = () => {
+  newPhoto = null;
+  $('#intro').classList.remove('hidden'); $('#introEdit').classList.add('hidden'); paintProfile();
+};
+$('#photoFile').onchange = async (e) => {
+  const f = e.target.files[0]; if (!f) return;
+  try { newPhoto = await shrink(f); $('#photo').style.backgroundImage = `url("${newPhoto}")`; $('#photo').textContent = ''; }
+  catch { toast('사진을 읽지 못했어요.'); }
+};
+$('#introSave').onclick = async () => {
+  const intro = $('#introText').value.trim();
+  const photo = newPhoto ?? profile.photo;
+  $('#introSave').disabled = true;
+  try {
+    await setDoc(doc(db, 'profile', 'main'), { intro, photo, updatedAt: serverTimestamp() });
+    profile = { intro, photo };
+    $('#intro').classList.remove('hidden'); $('#introEdit').classList.add('hidden');
+    paintProfile(); toast('저장했어요.');
+  } catch (e) { toast(errMsg(e)); }
+  $('#introSave').disabled = false;
+};
+
+loadProfile();
+document.querySelectorAll('.board').forEach(loadBoard);
+watchUser((u) => { user = u; adminBar($('#adminbar'), u); paintProfile(); paintBoardTools(); });
+</script>
+</body>
+</html>

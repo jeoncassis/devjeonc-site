@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>방명록 — jeonc의 개발홈</title>
+<link rel="stylesheet" href="/assets/site.css">
+<style>
+  .head { display: flex; align-items: flex-end; gap: 12px; margin-bottom: 8px; }
+  .list { max-height: calc(100vh - 260px); max-height: calc(100dvh - 260px); min-height: 240px; overflow-y: auto; border-top: 2px solid #222; }
+</style>
+</head>
+<body>
+<a class="home" href="/">← 홈</a>
+<div class="head">
+  <div><h1>방명록</h1><p class="sub" style="margin:0">누구나 글을 남길 수 있어요. 제목을 누르면 내용을 볼 수 있어요.</p></div>
+  <span class="spacer"></span>
+  <a class="btn" href="/guestbook/post.html?new=1">글쓰기</a>
+</div>
+<ul class="list" id="list"><li class="empty">불러오는 중…</li></ul>
+<div class="adminbar" id="adminbar"></div>
+
+<script type="module">
+import { db, collection, getDocs, query, orderBy, limit, fmtDate, watchUser, adminBar, $, errMsg } from '/assets/fb.js';
+
+async function load() {
+  const ul = $('#list');
+  try {
+    const snap = await getDocs(query(collection(db, 'guestbook'), orderBy('createdAt', 'desc'), limit(300)));
+    ul.textContent = '';
+    if (snap.empty) { ul.innerHTML = '<li class="empty">아직 글이 없어요. 첫 글을 남겨 주세요!</li>'; return; }
+    snap.forEach((d) => {
+      const v = d.data();
+      const li = document.createElement('li');
+      const a = document.createElement('a'); a.href = `/guestbook/post.html?id=${d.id}`;
+      const t = document.createElement('span'); t.className = 't'; t.textContent = v.title;
+      const m = document.createElement('span'); m.className = 'm'; m.textContent = `${v.name} · ${fmtDate(v.createdAt)}`;
+      a.append(t, m); li.append(a); ul.append(li);
+    });
+  } catch (e) { ul.innerHTML = ''; const li = document.createElement('li'); li.className = 'empty'; li.textContent = errMsg(e); ul.append(li); }
+}
+load();
+watchUser((u) => adminBar($('#adminbar'), u));
+</script>
+</body>
+</html>

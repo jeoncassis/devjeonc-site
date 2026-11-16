@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>방명록 — jeonc의 개발홈</title>
+<link rel="stylesheet" href="/assets/site.css">
+</head>
+<body>
+<a class="home" href="/guestbook/">← 방명록 목록</a>
+
+<!-- 글 보기 -->
+<section id="view" class="hidden">
+  <h1 class="post-title" id="vTitle"></h1>
+  <div class="post-meta" id="vMeta"></div>
+  <div class="post-body" id="vBody"></div>
+  <div class="row end" style="margin-top:16px">
+    <button class="ghost hidden" id="btnEdit">수정</button>
+    <button class="danger hidden" id="btnDel">삭제</button>
+  </div>
+
+  <div class="comments">
+    <h2>댓글</h2>
+    <div id="cList"></div>
+    <div id="cForm" class="hidden" style="margin-top:12px">
+      <textarea id="cBody" style="min-height:90px" placeholder="개발자 댓글 (관리자만 쓸 수 있어요)"></textarea>
+      <div class="row end" style="margin-top:8px"><button id="cSave">댓글 등록</button></div>
+    </div>
+    <p class="muted" id="cNote">댓글은 개발자만 남길 수 있어요.</p>
+  </div>
+</section>
+
+<!-- 글쓰기 / 수정 -->
+<section id="edit" class="hidden">
+  <h1 id="eHead">글쓰기</h1>
+  <label for="eName">이름</label>
+  <input type="text" id="eName" maxlength="30" placeholder="이름 또는 별명">
+  <label for="eTitle">제목</label>
+  <input type="text" id="eTitle" maxlength="100" placeholder="제목">
+  <label for="eBody">내용</label>
+  <textarea id="eBody" maxlength="5000" placeholder="하고 싶은 말을 자유롭게 남겨 주세요"></textarea>
+  <p class="muted">쓴 글은 같은 기기·같은 브라우저에서만 나중에 수정하거나 지울 수 있어요.</p>
+  <div class="row end">
+    <button class="ghost" id="btnCancel">취소</button>
+    <button id="btnSave">등록</button>
+  </div>
+</section>
+
+<div class="adminbar" id="adminbar"></div>
+
+<script type="module">
+import {
+  db, auth, doc, getDoc, collection, addDoc, updateDoc, deleteDoc, getDocs, query, orderBy, serverTimestamp,
+  watchUser, ensureUser, isOwner, adminBar, $, param, fmtDate, renderText, toast, errMsg,
+} from '/assets/fb.js';
+
+const id = param('id');
+let post = null;
+let user = null;
+
+function show(which) { $('#view').classList.toggle('hidden', which !== 'view'); $('#edit').classList.toggle('hidden', which !== 'edit'); }
+
+function canEdit() { return post && user && (user.uid === post.uid || isOwner(user)); }
+
+function paintView() {
+  $('#vTitle').textContent = post.title;
+  const edited = post.updatedAt && post.createdAt && post.updatedAt.seconds - post.createdAt.seconds > 5 ? ' (수정됨)' : '';
+  $('#vMeta').textContent = `${post.name} · ${fmtDate(post.createdAt)}${edited}`;
+  renderText($('#vBody'), post.body);
+  $('#btnEdit').classList.toggle('hidden', !canEdit());
+  $('#btnDel').classList.toggle('hidden', !canEdit());
+  $('#cForm').classList.toggle('hidden', !isOwner(user));
+  $('#cNote').classList.toggle('hidden', isOwner(user));
+}
+
+async function loadComments() {
+  const box = $('#cList');
+  try {
+    const snap = await getDocs(query(collection(db, 'guestbook', id, 'comments'), orderBy('createdAt', 'asc')));
+    box.textContent = '';
+    if (snap.empty) { box.innerHTML = '<p class="muted">아직 댓글이 없어요.</p>'; return; }
+    snap.forEach((d) => {
+      const c = d.data();
+      const div = document.createElement('div'); div.className = 'comment';
+      const who = document.createElement('div'); who.className = 'who'; who.textContent = `개발자 · ${fmtDate(c.createdAt)}`;
+      const body = document.createElement('div'); body.className = 'body'; renderText(body, c.body);
+      div.append(who, body);
+      if (isOwner(user)) {
+        const del = document.createElement('button'); del.className = 'link'; del.textContent = '댓글 삭제';
+        del.onclick = async () => {
+          if (!confirm('이 댓글을 삭제할까요?')) return;
+          try { await deleteDoc(doc(db, 'guestbook', id, 'comments', d.id)); loadComments(); } catch (e) { toast(errMsg(e)); }
+        };
+        div.append(del);
+      }
+      box.append(div);
+    });
+  } catch (e) { box.textContent = errMsg(e); }
+}
+
+async function loadPost() {
+  try {
+    const s = await getDoc(doc(db, 'guestbook', id));
+    if (!s.exists()) { document.body.insertAdjacentHTML('beforeend', '<p class="empty">글을 찾을 수 없어요. 삭제되었을 수 있어요.</p>'); return; }
+    post = s.data();
+    paintView(); show('view'); loadComments();
+  } catch (e) { toast(errMsg(e)); }
+}
+
+function openEdit(isNew) {
+  $('#eHead').textContent = isNew ? '글쓰기' : '글 수정';
+  $('#btnSave').textContent = isNew ? '등록' : '저장';
+  $('#eName').value = isNew ? (localStorage.getItem('gbName') || '') : post.name;
+  $('#eTitle').value = isNew ? '' : post.title;
+  $('#eBody').value = isNew ? '' : post.body;
+  show('edit');
+}
+
+$('#btnSave').onclick = async () => {
+  const name = $('#eName').value.trim(), title = $('#eTitle').value.trim(), body = $('#eBody').value.trim();
+  if (!name || !title || !body) { toast('이름, 제목, 내용을 모두 적어 주세요.'); return; }
+  $('#btnSave').disabled = true;
+  try {
+    const u = await ensureUser();
+    try { localStorage.setItem('gbName', name); } catch {}
+    if (!id) {
+      const ref = await addDoc(collection(db, 'guestbook'), { name, title, body, uid: u.uid, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
+      location.replace(`/guestbook/post.html?id=${ref.id}`);
+    } else {
+      await updateDoc(doc(db, 'guestbook', id), { name, title, body, updatedAt: serverTimestamp() });
+      Object.assign(post, { name, title, body });
+      paintView(); show('view'); toast('수정했어요.');
+    }
+  } catch (e) { toast(errMsg(e)); }
+  $('#btnSave').disabled = false;
+};
+$('#btnCancel').onclick = () => { if (id) show('view'); else location.href = '/guestbook/'; };
+$('#btnEdit').onclick = () => openEdit(false);
+$('#btnDel').onclick = async () => {
+  if (!confirm('이 글을 삭제할까요? 되돌릴 수 없어요.')) return;
+  try { await deleteDoc(doc(db, 'guestbook', id)); location.replace('/guestbook/'); } catch (e) { toast(errMsg(e)); }
+};
+$('#cSave').onclick = async () => {
+  const body = $('#cBody').value.trim();
+  if (!body) return;
+  $('#cSave').disabled = true;
+  try {
+    await addDoc(collection(db, 'guestbook', id, 'comments'), { body, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
+    $('#cBody').value = ''; loadComments();
+  } catch (e) { toast(errMsg(e)); }
+  $('#cSave').disabled = false;
+};
+
+let started = false;
+watchUser((u) => {
+  user = u;
+  adminBar($('#adminbar'), u);
+  if (!started) { started = true; if (id) loadPost(); else openEdit(true); }
+  else if (post) { paintView(); loadComments(); }
+});
+</script>
+</body>
+</html>

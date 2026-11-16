@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>개발자 소개 — jeonc의 개발홈</title>
+<link rel="stylesheet" href="/assets/site.css">
+</head>
+<body>
+<a class="home" href="/about/">← 개발자 소개</a>
+<p class="muted" id="boardName" style="margin:0 0 6px"></p>
+
+<section id="view" class="hidden">
+  <h1 class="post-title" id="vTitle"></h1>
+  <div class="post-meta" id="vMeta"></div>
+  <div class="post-body" id="vBody"></div>
+  <div class="row end" style="margin-top:16px">
+    <button class="ghost hidden" id="btnEdit">수정</button>
+    <button class="danger hidden" id="btnDel">삭제</button>
+  </div>
+</section>
+
+<section id="edit" class="hidden">
+  <h1 id="eHead">글쓰기</h1>
+  <label for="eTitle">제목</label>
+  <input type="text" id="eTitle" maxlength="200">
+  <label for="eBody">내용</label>
+  <textarea id="eBody" maxlength="20000" style="min-height:340px"></textarea>
+  <div class="row end" style="margin-top:8px">
+    <button class="ghost" id="btnCancel">취소</button>
+    <button id="btnSave">등록</button>
+  </div>
+</section>
+
+<p class="empty hidden" id="msg"></p>
+<div class="adminbar" id="adminbar"></div>
+
+<script type="module">
+import {
+  db, doc, getDoc, collection, addDoc, updateDoc, deleteDoc, serverTimestamp,
+  watchUser, isOwner, adminBar, $, param, fmtDate, renderText, toast, errMsg,
+} from '/assets/fb.js';
+
+const BOARDS = { notice: '공지사항 및 알림', news: '최신 뉴스', word: '개발자의 한마디' };
+const board = param('board');
+const id = param('id');
+const isNew = param('new') === '1';
+let post = null, user = null;
+
+function message(t) { $('#msg').textContent = t; $('#msg').classList.remove('hidden'); $('#view').classList.add('hidden'); $('#edit').classList.add('hidden'); }
+function show(w) { $('#msg').classList.add('hidden'); $('#view').classList.toggle('hidden', w !== 'view'); $('#edit').classList.toggle('hidden', w !== 'edit'); }
+
+if (!BOARDS[board]) { message('잘못된 주소예요.'); }
+else $('#boardName').textContent = BOARDS[board];
+
+function paintView() {
+  $('#vTitle').textContent = post.title;
+  const edited = post.updatedAt && post.createdAt && post.updatedAt.seconds - post.createdAt.seconds > 5 ? ` · 수정 ${fmtDate(post.updatedAt)}` : '';
+  $('#vMeta').textContent = `${fmtDate(post.createdAt)}${edited}`;
+  renderText($('#vBody'), post.body);
+  $('#btnEdit').classList.toggle('hidden', !isOwner(user));
+  $('#btnDel').classList.toggle('hidden', !isOwner(user));
+}
+
+function openEdit(fresh) {
+  if (!isOwner(user)) { message('글쓰기와 수정은 개발자만 할 수 있어요.'); return; }
+  $('#eHead').textContent = fresh ? `${BOARDS[board]} — 글쓰기` : '글 수정';
+  $('#btnSave').textContent = fresh ? '등록' : '저장';
+  $('#eTitle').value = fresh ? '' : post.title;
+  $('#eBody').value = fresh ? '' : post.body;
+  show('edit');
+}
+
+async function loadPost() {
+  try {
+    const s = await getDoc(doc(db, board, id));
+    if (!s.exists()) { message('글을 찾을 수 없어요. 삭제되었을 수 있어요.'); return; }
+    post = s.data(); paintView(); show('view');
+  } catch (e) { message(errMsg(e)); }
+}
+
+$('#btnSave').onclick = async () => {
+  const title = $('#eTitle').value.trim(), body = $('#eBody').value.trim();
+  if (!title) { toast('제목을 적어 주세요.'); return; }
+  $('#btnSave').disabled = true;
+  try {
+    if (!id) {
+      const ref = await addDoc(collection(db, board), { title, body, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
+      location.replace(`/about/post.html?board=${board}&id=${ref.id}`);
+    } else {
+      await updateDoc(doc(db, board, id), { title, body, updatedAt: serverTimestamp() });
+      Object.assign(post, { title, body }); paintView(); show('view'); toast('수정했어요.');
+    }
+  } catch (e) { toast(errMsg(e)); }
+  $('#btnSave').disabled = false;
+};
+$('#btnCancel').onclick = () => { if (id) show('view'); else location.href = '/about/'; };
+$('#btnEdit').onclick = () => openEdit(false);
+$('#btnDel').onclick = async () => {
+  if (!confirm('이 글을 삭제할까요? 되돌릴 수 없어요.')) return;
+  try { await deleteDoc(doc(db, board, id)); location.replace('/about/'); } catch (e) { toast(errMsg(e)); }
+};
+
+let started = false;
+watchUser((u) => {
+  user = u; adminBar($('#adminbar'), u);
+  if (!BOARDS[board]) return;
+  if (!started) { started = true; if (id) loadPost(); else if (isNew) openEdit(true); else message('잘못된 주소예요.'); }
+  else if (post) paintView();
+  else if (isNew && !id) openEdit(true);
+});
+</script>
+</body>
+</html>
