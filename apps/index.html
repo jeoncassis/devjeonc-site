@@ -32,9 +32,10 @@
   section ul::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px; }
   /* 넓은 화면: 페이지 전체가 정확히 한 화면, 남는 높이를 목록이 씀 */
   @media (min-width: 721px) {
+    html { overflow: hidden; }
     body { height: 100vh; height: 100dvh; margin: 0 auto; padding: 20px 20px 14px; display: flex; flex-direction: column; overflow: hidden; }
     .home { margin-bottom: 10px; }
-    .cols { flex: 1; min-height: 0; height: auto; margin-top: 16px; }
+    .cols { flex: 1; min-height: 0 !important; height: auto; margin-top: 16px; }
     footer { margin-top: 12px; flex: none; }
   }
   @media (max-width: 720px) {

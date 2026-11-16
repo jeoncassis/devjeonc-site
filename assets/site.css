@@ -49,6 +49,7 @@ label { display: block; font-size: 0.85rem; color: #555; margin: 14px 0 4px; }
 
 /* 넓은 화면: 페이지 전체가 정확히 한 화면, 남는 높이를 목록·본문이 씀 */
 @media (min-width: 761px) {
+  html { overflow: hidden; }
   body { height: 100vh; height: 100dvh; margin: 0 auto; padding: 20px 20px 10px; display: flex; flex-direction: column; overflow: hidden; }
   .home { margin-bottom: 10px; flex: none; }
   .sub { margin-bottom: 14px; }
